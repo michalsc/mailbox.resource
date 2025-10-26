@@ -4,7 +4,9 @@ project(mailbox VERSION 1.0.0)
 include(cmake/verstring.cmake)
 include(cmake/sfdc.cmake)
 
-add_subdirectory(devicetree.resource EXCLUDE_FROM_ALL)
+if(NOT TARGET devicetree)
+    add_subdirectory(devicetree.resource EXCLUDE_FROM_ALL)
+endif()
 
 get_verstring(VERSTRING)
 sfdc(sfd/mailbox_lib.sfd)
