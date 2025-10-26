@@ -1,0 +1,19 @@
+==id $Id: mailbox_lib.sfd 0.1.0 $
+* "mailbox.resource"
+==base _MailboxBase
+==basetype APTR
+==libname mailbox
+==include <exec/types.h>
+==bias 6
+==public
+VOID MB_RawCommand(ULONG *command) (A0)
+ULONG MB_StringCommand(STRPTR command, STRPTR reply, ULONG reply_capacity) (A0,A1,D0)
+ULONG MB_GetClockRate(ULONG clock_id) (D0)
+ULONG MB_SetClockRate(ULONG clock_id, ULONG speed) (D0,D1)
+ULONG MB_GetClockState(ULONG clock_id) (D0)
+ULONG MB_SetClockState(ULONG clock_id, ULONG state) (D0,D1)
+ULONG MB_GetPowerState(ULONG id) (D0)
+ULONG MB_SetPowerState(ULONG id, ULONG state) (D0,D1)
+ULONG MB_GetGPIOState(ULONG gpio) (D0)
+ULONG MB_SetGPIOState(ULONG gpio, ULONG state) (D0,D1)
+==end
