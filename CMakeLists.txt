@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.14.0)
 project(mailbox VERSION 1.0.0)
 
+include(cmake/bin2h.cmake)
 include(cmake/verstring.cmake)
 include(cmake/sfdc.cmake)
 
@@ -26,6 +27,8 @@ add_executable(mailbox.resource
     src/setgpiostate.c
     src/mbox.c
 )
+
+bin_to_header(mailbox.resource)
 
 target_compile_options(mailbox.resource PRIVATE -Os -m68040 -msmall-code -fomit-frame-pointer)
 target_compile_definitions(mailbox.resource PRIVATE VERSION_STRING="${VERSTRING}")
