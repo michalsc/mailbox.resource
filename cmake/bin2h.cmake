@@ -11,9 +11,10 @@ function(bin_to_header target)
 
     add_custom_command(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${target}.h
-        COMMAND ${XXD} -i $<TARGET_FILE:${target}> > ${CMAKE_CURRENT_BINARY_DIR}/${target}.h
+        COMMAND ${XXD} -i $<TARGET_FILE_NAME:${target}> > ${CMAKE_CURRENT_BINARY_DIR}/${target}.h
         DEPENDS ${target}
-        COMMENT "Generating ${target}.h from binary"
+        COMMENT "Generating ${target}.h from binary."
+        WORKING_DIRECTORY $<TARGET_FILE_DIR:${target}>
         VERBATIM
     )
 
