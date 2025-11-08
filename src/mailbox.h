@@ -28,6 +28,16 @@ ULONG mbox_recv(ULONG channel, struct MailboxBase * Base);
 
 static inline ULONG LE32(ULONG x) { return __builtin_bswap32(x); }
 
+static inline void wr32le(volatile ULONG *addr, ULONG value) {
+    *addr = LE32(value);
+    asm volatile("nop");
+}
+
+void kprintf(REGARG(const char * msg, "a0"), REGARG(void * args, "a1"));
+
+#define bug(string, ...) \
+    do { ULONG args[] = {0, __VA_ARGS__}; kprintf(string, &args[1]); } while(0)
+
 VOID L_RawCommand(REGARG(ULONG * command, "a0"), REGARG(struct MailboxBase *MBBase, "a6"));
 ULONG L_StringCommand(REGARG(STRPTR command, "a0"), REGARG(STRPTR reply, "a1"), REGARG(ULONG reply_capacity, "d0"), REGARG(struct MailboxBase *MBBase, "a6"));
 ULONG L_GetClockRate(REGARG(ULONG clock_id, "d0"), REGARG(struct MailboxBase *MBBase, "a6"));

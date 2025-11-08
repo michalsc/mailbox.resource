@@ -25,10 +25,13 @@ ULONG L_SetClockState(REGARG(ULONG clock_id, "d0"), REGARG(ULONG state, "d1"), R
 
     CachePreDMA(FBReq, &len, 0);
     mbox_send(8, (ULONG)FBReq, MBBase);
-    ULONG reply = mbox_recv(8, MBBase);
+    ULONG resp = mbox_recv(8, MBBase);
     CachePostDMA(FBReq, &len, 0);
 
-    retval = LE32(FBReq[6]);
+    if (resp == 0xffffffff)
+        retval = -1;
+    else
+        retval = LE32(FBReq[6]);
 
     ReleaseSemaphore(&MBBase->mb_Lock);
 

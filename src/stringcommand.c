@@ -55,7 +55,10 @@ ULONG L_StringCommand(REGARG(STRPTR command, "a0"), REGARG(STRPTR reply, "a1"), 
         CopyMem(&FBReq[6], reply, reply_capacity > 1024 ? 1024 : reply_capacity);
     }
 
-    retval = LE32(FBReq[5]);
+    if (resp == 0xffffffff)
+        retval = -1;
+    else
+        retval = LE32(FBReq[5]);
 
     ReleaseSemaphore(&MBBase->mb_Lock);
 

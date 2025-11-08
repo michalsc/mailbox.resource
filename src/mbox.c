@@ -19,6 +19,7 @@ ULONG mbox_recv(ULONG channel, struct MailboxBase * Base)
     volatile ULONG *mbox_read = (ULONG*)(Base->mb_MailBox);
     volatile ULONG *mbox_status = (ULONG*)((ULONG)Base->mb_MailBox + 0x18);
     ULONG response, status;
+    ULONG timer = LE32(*(volatile ULONG*)0xf2003004);
 
     do
     {
@@ -26,12 +27,20 @@ ULONG mbox_recv(ULONG channel, struct MailboxBase * Base)
         {
             status = LE32(*mbox_status);
             asm volatile("nop");
+
+            /* If waiting more than three seconds, return with error */
+            if (LE32(*(volatile ULONG*)0xf2003004) - timer > 3000000)
+                return -1;
         }
         while (status & MBOX_RX_EMPTY);
 
         asm volatile("nop");
         response = LE32(*mbox_read);
         asm volatile("nop");
+
+        /* If waiting more than three seconds, return with error */
+        if (LE32(*(volatile ULONG*)0xf2003004) - timer > 3000000)
+            return -1;
     }
     while ((response & MBOX_CHANMASK) != channel);
 
@@ -43,6 +52,7 @@ void mbox_send(ULONG channel, ULONG data, struct MailboxBase * Base)
     volatile ULONG *mbox_write = (ULONG*)((ULONG)Base->mb_MailBox + 0x20);
     volatile ULONG *mbox_status = (ULONG*)((ULONG)Base->mb_MailBox + 0x18);
     ULONG status;
+    ULONG timer = LE32(*(volatile ULONG*)0xf2003004);
 
     data &= ~MBOX_CHANMASK;
     data |= channel & MBOX_CHANMASK;
@@ -51,6 +61,10 @@ void mbox_send(ULONG channel, ULONG data, struct MailboxBase * Base)
     {
         status = LE32(*mbox_status);
         asm volatile("nop");
+
+        /* If waiting more than three seconds, return with error */
+        if (LE32(*(volatile ULONG*)0xf2003004) - timer > 3000000)
+            return;
     }
     while (status & MBOX_TX_FULL);
 

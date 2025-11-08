@@ -28,7 +28,10 @@ ULONG L_GetClockState(REGARG(ULONG clock_id, "d0"), REGARG(struct MailboxBase *M
     ULONG resp = mbox_recv(8, MBBase);
     CachePostDMA(FBReq, &len, 0);
 
-    retval = LE32(FBReq[6]);
+    if (resp == 0xffffffff)
+        retval = -1;
+    else
+        retval = LE32(FBReq[6]);
 
     ReleaseSemaphore(&MBBase->mb_Lock);
 

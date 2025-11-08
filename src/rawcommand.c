@@ -40,4 +40,8 @@ VOID L_RawCommand(REGARG(ULONG * command, "a0"), REGARG(struct MailboxBase *MBBa
     }
 
     ReleaseSemaphore(&MBBase->mb_Lock);
+
+    /* If mailbox returned with error, set the first command word to 0xffffffff */
+    if (resp == 0xffffffff)
+        command[0] = 0xffffffff;
 }

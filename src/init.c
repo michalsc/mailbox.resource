@@ -53,6 +53,8 @@ APTR Init(REGARG(struct ExecBase *SysBase, "a6"))
 
     base_pointer = AllocMem(BASE_NEG_SIZE + BASE_POS_SIZE, MEMF_PUBLIC | MEMF_CLEAR);
 
+    bug("[mailbox] Init\n");
+
     if (base_pointer)
     {
         ULONG relFuncTable[NUMBER_OF_FUNCTIONS + 1];
@@ -84,6 +86,8 @@ APTR Init(REGARG(struct ExecBase *SysBase, "a6"))
 
         MailboxBase->mb_RequestBase = AllocMem(512*4, MEMF_FAST);
         MailboxBase->mb_Request = (ULONG *)(((ULONG)MailboxBase->mb_RequestBase + 127) & ~127);
+
+        bug("[mailbox] Request buffer @ %08lx\n", (ULONG)MailboxBase->mb_Request);
 
         MailboxBase->mb_ExecBase = SysBase;
 
@@ -158,6 +162,8 @@ APTR Init(REGARG(struct ExecBase *SysBase, "a6"))
 
                 MailboxBase->mb_MailBox = (APTR)((ULONG)MailboxBase->mb_MailBox - phys_vc4 + phys_cpu);
 
+                bug("[mailbox] Pi mailbox @ %08lx\n", (ULONG)MailboxBase->mb_MailBox);
+
                 DT_CloseKey(key);
             }
 
@@ -177,4 +183,16 @@ APTR Init(REGARG(struct ExecBase *SysBase, "a6"))
     CloseLibrary((struct Library*)ExpansionBase);
 
     return MailboxBase;
+}
+
+static void putch(REGARG(UBYTE data, "d0"), REGARG(APTR ignore, "a3"))
+{
+    (void)ignore;
+    *(UBYTE*)0xdeadbeef = data;
+}
+
+void kprintf(REGARG(const char * msg, "a0"), REGARG(void * args, "a1")) 
+{
+    struct ExecBase *SysBase = *(struct ExecBase **)4UL;
+    RawDoFmt(msg, args, (APTR)putch, NULL);
 }

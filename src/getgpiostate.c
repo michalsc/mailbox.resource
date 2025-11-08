@@ -28,7 +28,10 @@ ULONG L_GetGPIOState(REGARG(ULONG gpio, "d0"), REGARG(struct MailboxBase *MBBase
     ULONG resp = mbox_recv(8, MBBase);
     CachePostDMA(FBReq, &len, 0);
 
-    retval = LE32(FBReq[6]);
+    if (resp == 0xffffffff)
+        retval = -1;
+    else
+        retval = LE32(FBReq[6]);
 
     ReleaseSemaphore(&MBBase->mb_Lock);
 
