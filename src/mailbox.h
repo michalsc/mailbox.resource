@@ -7,8 +7,15 @@
 #include <common/compiler.h>
 
 #define MB_PRIORITY     119
+/* The version comes from project() in CMakeLists.txt, which defines MB_VERSION and MB_REVISION: the id string, lib_Version and lib_Revision cannot differ.
+   These are only for a build that does not go through CMake, keep them equal to project() */
+#ifndef MB_VERSION
 #define MB_VERSION      1
-#define MB_REVISION     0
+#endif
+
+#ifndef MB_REVISION
+#define MB_REVISION     2
+#endif
 
 struct MailboxBase {
     struct Library          mb_Node;
@@ -19,7 +26,7 @@ struct MailboxBase {
     ULONG *                 mb_Request;
 };
 
-#define NUMBER_OF_FUNCTIONS 10
+#define NUMBER_OF_FUNCTIONS 12
 #define BASE_NEG_SIZE (NUMBER_OF_FUNCTIONS * 6)
 #define BASE_POS_SIZE ((sizeof(struct MailboxBase)))
 
@@ -48,6 +55,8 @@ ULONG L_GetPowerState(REGARG(ULONG id, "d0"), REGARG(struct MailboxBase *MBBase,
 ULONG L_SetPowerState(REGARG(ULONG id, "d0"), REGARG(ULONG state, "d1"), REGARG(struct MailboxBase *MBBase, "a6"));
 ULONG L_GetGPIOState(REGARG(ULONG gpio, "d0"), REGARG(struct MailboxBase *MBBase, "a6"));
 ULONG L_SetGPIOState(REGARG(ULONG gpio, "d0"), REGARG(ULONG state, "d1"), REGARG(struct MailboxBase *MBBase, "a6"));
+VOID L_ObtainLock(REGARG(struct MailboxBase *MBBase, "a6"));
+VOID L_ReleaseLock(REGARG(struct MailboxBase *MBBase, "a6"));
 
 
 

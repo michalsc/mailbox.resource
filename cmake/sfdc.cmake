@@ -10,6 +10,7 @@ function(sfdc SFD_FILE)
     make_directory(${CMAKE_CURRENT_BINARY_DIR}/include/pragmas)
     make_directory(${CMAKE_CURRENT_BINARY_DIR}/include/proto)
     make_directory(${CMAKE_CURRENT_BINARY_DIR}/include/inline)
+    make_directory(${CMAKE_CURRENT_BINARY_DIR}/FD)
 
     get_filename_component(LIB_NAME_FULL ${SFD_FILE} NAME_WLE)
     string(REGEX REPLACE "_lib$" "" LIB_NAME ${LIB_NAME_FULL})
@@ -46,11 +47,20 @@ function(sfdc SFD_FILE)
         VERBATIM
     )
 
+    add_custom_command(
+        OUTPUT FD/${LIB_NAME}.fd
+        COMMAND sfdc ${CMAKE_CURRENT_SOURCE_DIR}/${SFD_FILE} --mode=fd
+                     --output=FD/${LIB_NAME}.fd
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SFD_FILE}
+        VERBATIM
+    )
+
     add_library(${LIB_NAME} INTERFACE
         include/clib/${LIB_NAME}_protos.h
         include/pragmas/${LIB_NAME}_pragmas.h
         include/proto/${LIB_NAME}.h
         include/inline/${LIB_NAME}.h
+        FD/${LIB_NAME}.fd
     )
     target_include_directories(${LIB_NAME} INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/include)
 

@@ -1,0 +1,619 @@
+TABLE OF CONTENTS
+
+mailbox.resource/--background--
+mailbox.resource/MB_GetClockRate
+mailbox.resource/MB_GetClockState
+mailbox.resource/MB_GetGPIOState
+mailbox.resource/MB_GetPowerState
+mailbox.resource/MB_ObtainLock
+mailbox.resource/MB_RawCommand
+mailbox.resource/MB_ReleaseLock
+mailbox.resource/MB_SetClockRate
+mailbox.resource/MB_SetClockState
+mailbox.resource/MB_SetGPIOState
+mailbox.resource/MB_SetPowerState
+mailbox.resource/MB_StringCommand
+mailbox.resource/--background--               mailbox.resource/--background--
+
+   VERSION MARKS
+	The calls of this resource are described one by one below. This entry
+	says since when each exists, and how a change is told, as the autodocs
+	of the system do (see exec.library/AllocPooled or StackSwap).
+
+	A call that was added after the first version of the resource has its
+	version at the end of the line of its NAME, like "(V1.2)": the number is
+	the version of the resource in which it appeared. A change in what a call
+	does is written in its FUNCTION or NOTE text, "As of V1.1 ..." and "Prior
+	to V1.1 ...". A call without a version in its NAME has been there since
+	1.0.
+
+   VERSIONS
+	The history comes from the repository of the project and from the one
+	that it was taken out of (Emu68-tools-old).
+
+	1.0   2025-10-13  First version: MB_RawCommand, MB_StringCommand,
+	                  MB_GetClockRate, MB_SetClockRate, MB_GetClockState,
+	                  MB_SetClockState, MB_GetPowerState, MB_SetPowerState,
+	                  MB_GetGPIOState and MB_SetGPIOState.
+	1.1   2025-11-08  Every call gives up after three seconds without an
+	                  answer from the firmware and reports it (see the
+	                  calls). No call added.
+	1.2   2026-10-17  MB_ObtainLock and MB_ReleaseLock added. No other call
+	                  changed.
+
+   VERSION AND REVISION
+	lib_Version and lib_Revision of the resource. In 1.1 they were left as
+	in 1.0, written by hand: lib_Revision stayed at 0 while the id string
+	said 1.1. So a resource of 1.0 and one of 1.1 both have lib_Revision 0.
+	From 1.2 the id string, lib_Version and lib_Revision all come from the
+	version of the project (1.2 gives lib_Version 1 and lib_Revision 2).
+
+	A program that needs the lock calls (V1.2) tests lib_Revision >= 2. It
+	cannot tell 1.0 from 1.1 by lib_Revision, and nothing depends on it:
+	no call exists in one and not in the other.
+
+   SEE ALSO
+	exec.library/OpenResource()
+
+mailbox.resource/MB_GetClockRate             mailbox.resource/MB_GetClockRate
+
+   NAME
+	MB_GetClockRate -- read a clock's configured rate
+
+   SYNOPSIS
+	rate = MB_GetClockRate( clock_id )
+	d0                      d0
+
+	ULONG MB_GetClockRate(ULONG);
+
+   FUNCTION
+	Reads the configured rate of a VideoCore-managed clock, using
+	property tag GET_CLOCK_RATE (0x00030002).
+
+   INPUTS
+	clock_id        The clock to query, by the firmware's id: 1 EMMC, 2 UART,
+	                3 ARM, 4 CORE, 5 V3D (the firmware documents the others).
+
+   RESULTS
+	rate            The clock's configured rate in Hz, or -1 on a mailbox
+	                transport error.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/dos.h>
+	#include <proto/mailbox.h>
+
+	APTR MailboxBase = OpenResource("mailbox.resource");
+	if (MailboxBase)
+	{
+	    ULONG rate = MB_GetClockRate(3);                   /* 3 = ARM clock */
+	    Printf("ARM clock: %ld Hz\n", rate);
+	}
+
+   NOTE
+	As of V1.1 the call gives up after three seconds without an answer from
+	the firmware and returns -1. Prior to V1.1 it had no time limit and no
+	way to report a failure: a mailbox that did not answer stopped the task
+	for good.
+
+   SEE ALSO
+	mailbox.resource/MB_SetClockRate()
+
+mailbox.resource/MB_GetClockState           mailbox.resource/MB_GetClockState
+
+   NAME
+	MB_GetClockState -- read a clock's enabled/disabled state
+
+   SYNOPSIS
+	state = MB_GetClockState( clock_id )
+	d0                        d0
+
+	ULONG MB_GetClockState(ULONG);
+
+   FUNCTION
+	Reads whether a VideoCore-managed clock is currently enabled,
+	using property tag GET_CLOCK_STATE (0x00030001).
+
+   INPUTS
+	clock_id        The clock to query, by the firmware's id: 1 EMMC, 2 UART,
+	                3 ARM, 4 CORE, 5 V3D.
+
+   RESULTS
+	state           Bit 0 set if the clock exists and is on, or -1 on a
+	                mailbox transport error.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/dos.h>
+	#include <proto/mailbox.h>
+
+	APTR MailboxBase = OpenResource("mailbox.resource");
+	if (MailboxBase)
+	{
+	    ULONG state = MB_GetClockState(3);                  /* 3 = ARM clock */
+	    Printf("ARM clock state: %ld\n", state);
+	}
+
+   NOTE
+	As of V1.1 the call gives up after three seconds without an answer from
+	the firmware and returns -1. Prior to V1.1 it had no time limit and no
+	way to report a failure: a mailbox that did not answer stopped the task
+	for good.
+
+   SEE ALSO
+	mailbox.resource/MB_SetClockState()
+
+mailbox.resource/MB_GetGPIOState             mailbox.resource/MB_GetGPIOState
+
+   NAME
+	MB_GetGPIOState -- read a GPIO/LED expander pin state
+
+   SYNOPSIS
+	state = MB_GetGPIOState( gpio )
+	d0                       d0
+
+	ULONG MB_GetGPIOState(ULONG);
+
+   FUNCTION
+	Reads the state of an expander GPIO/LED pin, using property tag
+	GET_LED_STATUS (0x00030041), documented under this name because
+	the same tag is what the mailbox.resource author uses for
+	general GPIO pin access.
+
+   INPUTS
+	gpio            The GPIO number, offset by 128 internally before being
+	                sent to the firmware: 42 is the status LED, 130 the power
+	                LED.
+
+   RESULTS
+	state           The pin's state, or -1 on a mailbox transport error.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/dos.h>
+	#include <proto/mailbox.h>
+
+	APTR MailboxBase = OpenResource("mailbox.resource");
+	if (MailboxBase)
+	{
+	    ULONG state = MB_GetGPIOState(42);                  /* 42 = status LED */
+	    Printf("Status LED: %ld\n", state);
+	}
+
+   NOTE
+	As of V1.1 the call gives up after three seconds without an answer from
+	the firmware and returns -1. Prior to V1.1 it had no time limit and no
+	way to report a failure: a mailbox that did not answer stopped the task
+	for good.
+
+   SEE ALSO
+	mailbox.resource/MB_SetGPIOState()
+
+mailbox.resource/MB_GetPowerState           mailbox.resource/MB_GetPowerState
+
+   NAME
+	MB_GetPowerState -- read a device's power on/off state
+
+   SYNOPSIS
+	state = MB_GetPowerState( id )
+	d0                        d0
+
+	ULONG MB_GetPowerState(ULONG);
+
+   FUNCTION
+	Reads whether a VideoCore-managed device domain is powered on,
+	using property tag GET_POWER_STATE (0x00020001).
+
+   INPUTS
+	id              The device to query, by the firmware's id: 0 SD card,
+	                3 USB host controller (the firmware documents the others).
+
+   RESULTS
+	state           Bit 0 set if the device is on, or -1 on a mailbox
+	                transport error.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/dos.h>
+	#include <proto/mailbox.h>
+
+	APTR MailboxBase = OpenResource("mailbox.resource");
+	if (MailboxBase)
+	{
+	    ULONG state = MB_GetPowerState(0);                  /* 0 = SD card */
+	    Printf("SD card power: %ld\n", state);
+	}
+
+   NOTE
+	As of V1.1 the call gives up after three seconds without an answer from
+	the firmware and returns -1. Prior to V1.1 it had no time limit and no
+	way to report a failure: a mailbox that did not answer stopped the task
+	for good.
+
+   SEE ALSO
+	mailbox.resource/MB_SetPowerState()
+
+mailbox.resource/MB_ObtainLock                 mailbox.resource/MB_ObtainLock
+
+   NAME
+	MB_ObtainLock -- keep the mailbox for a sequence of commands (V1.2)
+
+   SYNOPSIS
+	MB_ObtainLock()
+
+	VOID MB_ObtainLock(VOID);
+
+   FUNCTION
+	Takes the lock that serialises the commands, and keeps it until
+	MB_ReleaseLock().
+
+	Every command is serialised on its own, but a sequence of
+	commands is not: another task can send a message in between.
+	That matters when the firmware keeps a state from one message to
+	the next, for example a selection made by the first message and
+	used by the next. A task which holds the lock sees no other
+	command until it releases it, so the sequence cannot be cut.
+
+	The lock is a SignalSemaphore. It nests for the task which owns
+	it, so the calls made between MB_ObtainLock() and
+	MB_ReleaseLock() simply take it again. Each MB_ObtainLock()
+	needs its MB_ReleaseLock().
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/dos.h>
+	#include <proto/mailbox.h>
+
+	APTR MailboxBase = OpenResource("mailbox.resource");
+	if (MailboxBase)
+	{
+	    ULONG select[7] = { 7 * 4, 0, 0x00048013, 4, 0, 1, 0 };
+	    ULONG pitch[7]  = { 7 * 4, 0, 0x00040008, 4, 0, 0, 0 };
+
+	    MB_ObtainLock();
+	    MB_RawCommand(select);      /* SET_DISPLAY_NUM 1 */
+	    MB_RawCommand(pitch);       /* GET_PITCH, of that display */
+	    MB_ReleaseLock();
+
+	    Printf("Pitch: %ld\n", pitch[5]);
+	}
+
+   NOTE
+	The other tasks wait while the lock is held: take it, send the
+	commands, release it. Do not call it from an interrupt, and do
+	not wait for anything else while holding it. A task which ends
+	without releasing it leaves the mailbox locked for everyone.
+
+	The call exists from version 1.2 of the resource. On an older one
+	the vector is not there and the call would jump into nothing:
+	check lib_Version and lib_Revision of the resource first.
+
+   SEE ALSO
+	mailbox.resource/MB_ReleaseLock(),
+	mailbox.resource/MB_RawCommand()
+
+mailbox.resource/MB_RawCommand                 mailbox.resource/MB_RawCommand
+
+   NAME
+	MB_RawCommand -- send a raw VideoCore property-tag buffer
+
+   SYNOPSIS
+	MB_RawCommand( command )
+	               a0
+
+	VOID MB_RawCommand(ULONG *);
+
+   FUNCTION
+	MB_RawCommand sends a caller-built VideoCore mailbox property-
+	tag buffer as-is, over the property channel (mailbox channel 8),
+	and waits for the firmware's reply. It handles the semaphore
+	locking, endianness byte-swapping and cache DMA flushing
+	internally, then swaps the buffer contents back to big-endian
+	before returning, so the caller's buffer is portable m68k data
+	on both sides of the call.
+
+	This is the escape hatch for any property tag that does not
+	(yet) have a dedicated function in this resource. A message may
+	carry several tags one after the other: they are sent together,
+	in one round trip, and no other task comes in between them. Several
+	messages that must not be separated are kept together with
+	MB_ObtainLock().
+
+   INPUTS
+	command         A pointer to a property-tag buffer, big-endian, built
+	                exactly as documented on the raspberrypi/firmware
+	                wiki's Mailbox-property-interface page. command[0]
+	                must hold the buffer's total size in bytes. The buffer
+	                may not exceed 480 longwords.
+
+   RESULTS
+	None. On success, the buffer is overwritten in place with the
+	firmware's reply (already byte-swapped back to big-endian). On
+	mailbox failure or timeout, command[0] is set to 0xffffffff.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/dos.h>
+	#include <proto/mailbox.h>
+
+	APTR MailboxBase = OpenResource("mailbox.resource");
+	if (MailboxBase)
+	{
+	    ULONG command[7] = { 7 * 4, 0, 0x00000001, 4, 0, 0, 0 };
+
+	    MB_RawCommand(command);
+	    Printf("Firmware revision: %ld\n", command[5]);
+	}
+
+   NOTE
+	This call is not reentrant with itself or with any other
+	function of this resource while it is running: it is serialised
+	internally by the resource's own semaphore, so concurrent
+	callers simply queue up.
+
+	As of V1.1 the call gives up after three seconds without an answer from
+	the firmware and sets command[0] to 0xffffffff. Prior to V1.1 it had
+	no time limit and no way to report a failure: a mailbox that did not
+	answer stopped the task for good.
+
+   SEE ALSO
+	mailbox.resource/MB_StringCommand(),
+	mailbox.resource/MB_ObtainLock()
+
+mailbox.resource/MB_ReleaseLock               mailbox.resource/MB_ReleaseLock
+
+   NAME
+	MB_ReleaseLock -- let the other tasks use the mailbox again (V1.2)
+
+   SYNOPSIS
+	MB_ReleaseLock()
+
+	VOID MB_ReleaseLock(VOID);
+
+   FUNCTION
+	Releases the lock taken by MB_ObtainLock(). The lock nests: it is
+	given back to the other tasks when the owner has released it as
+	many times as it has obtained it.
+
+   NOTE
+	Call it from the task which called MB_ObtainLock(), once for each
+	call. Exists from version 1.2 of the resource, see
+	MB_ObtainLock().
+
+   SEE ALSO
+	mailbox.resource/MB_ObtainLock()
+
+mailbox.resource/MB_SetClockRate             mailbox.resource/MB_SetClockRate
+
+   NAME
+	MB_SetClockRate -- set a clock's rate
+
+   SYNOPSIS
+	rate = MB_SetClockRate( clock_id, speed )
+	d0                      d0        d1
+
+	ULONG MB_SetClockRate(ULONG, ULONG);
+
+   FUNCTION
+	Sets the rate of a VideoCore-managed clock, using property tag
+	SET_CLOCK_RATE (0x00038002).
+
+   INPUTS
+	clock_id        The clock to set, by the firmware's id: 1 EMMC, 2 UART,
+	                3 ARM, 4 CORE, 5 V3D.
+	speed           The desired rate in Hz.
+
+   RESULTS
+	rate            The rate actually applied by the firmware, or -1 on a
+	                mailbox transport error.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/dos.h>
+	#include <proto/mailbox.h>
+
+	APTR MailboxBase = OpenResource("mailbox.resource");
+	if (MailboxBase)
+	{
+	    ULONG rate = MB_SetClockRate(3, 600000000);          /* 3 = ARM clock */
+	    Printf("ARM clock set to: %ld Hz\n", rate);
+	}
+
+   NOTE
+	As of V1.1 the call gives up after three seconds without an answer from
+	the firmware and returns -1. Prior to V1.1 it had no time limit and no
+	way to report a failure: a mailbox that did not answer stopped the task
+	for good.
+
+   SEE ALSO
+	mailbox.resource/MB_GetClockRate()
+
+mailbox.resource/MB_SetClockState           mailbox.resource/MB_SetClockState
+
+   NAME
+	MB_SetClockState -- enable or disable a clock
+
+   SYNOPSIS
+	state = MB_SetClockState( clock_id, state )
+	d0                        d0        d1
+
+	ULONG MB_SetClockState(ULONG, ULONG);
+
+   FUNCTION
+	Enables or disables a VideoCore-managed clock, using property
+	tag SET_CLOCK_STATE (0x00038001).
+
+   INPUTS
+	clock_id        The clock to set, by the firmware's id: 1 EMMC, 2 UART,
+	                3 ARM, 4 CORE, 5 V3D.
+	state           Bit 0: 1 to turn the clock on, 0 to turn it off.
+
+   RESULTS
+	state           The state actually applied, or -1 on a mailbox
+	                transport error.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/dos.h>
+	#include <proto/mailbox.h>
+
+	APTR MailboxBase = OpenResource("mailbox.resource");
+	if (MailboxBase)
+	{
+	    ULONG state = MB_SetClockState(2, 1);                /* 2 = UART clock */
+	    Printf("UART clock state: %ld\n", state);
+	}
+
+   NOTE
+	As of V1.1 the call gives up after three seconds without an answer from
+	the firmware and returns -1. Prior to V1.1 it had no time limit and no
+	way to report a failure: a mailbox that did not answer stopped the task
+	for good.
+
+   SEE ALSO
+	mailbox.resource/MB_GetClockState()
+
+mailbox.resource/MB_SetGPIOState             mailbox.resource/MB_SetGPIOState
+
+   NAME
+	MB_SetGPIOState -- set a GPIO/LED expander pin state
+
+   SYNOPSIS
+	state = MB_SetGPIOState( gpio, state )
+	d0                       d0    d1
+
+	ULONG MB_SetGPIOState(ULONG, ULONG);
+
+   FUNCTION
+	Sets the state of an expander GPIO/LED pin, using property tag
+	SET_LED_STATUS (0x00038041).
+
+   INPUTS
+	gpio            The GPIO number, offset by 128 internally, see
+	                MB_GetGPIOState().
+	state           The pin state to set.
+
+   RESULTS
+	state           The state actually applied, or -1 on a mailbox
+	                transport error.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/dos.h>
+	#include <proto/mailbox.h>
+
+	APTR MailboxBase = OpenResource("mailbox.resource");
+	if (MailboxBase)
+	{
+	    ULONG state = MB_SetGPIOState(42, 1);                /* 42 = status LED */
+	    Printf("Status LED set to: %ld\n", state);
+	}
+
+   NOTE
+	As of V1.1 the call gives up after three seconds without an answer from
+	the firmware and returns -1. Prior to V1.1 it had no time limit and no
+	way to report a failure: a mailbox that did not answer stopped the task
+	for good.
+
+   SEE ALSO
+	mailbox.resource/MB_GetGPIOState()
+
+mailbox.resource/MB_SetPowerState           mailbox.resource/MB_SetPowerState
+
+   NAME
+	MB_SetPowerState -- power a device domain on or off
+
+   SYNOPSIS
+	state = MB_SetPowerState( id, state )
+	d0                        d0  d1
+
+	ULONG MB_SetPowerState(ULONG, ULONG);
+
+   FUNCTION
+	Powers a VideoCore-managed device domain on or off, using
+	property tag SET_POWER_STATE (0x00028001).
+
+   INPUTS
+	id              The device to set, by the firmware's id: 0 SD card,
+	                3 USB host controller.
+	state           Bit 0: 1 to power on, 0 to power off.
+
+   RESULTS
+	state           The state actually applied, or -1 on a mailbox
+	                transport error.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/dos.h>
+	#include <proto/mailbox.h>
+
+	APTR MailboxBase = OpenResource("mailbox.resource");
+	if (MailboxBase)
+	{
+	    ULONG state = MB_SetPowerState(3, 1);                /* 3 = USB host controller */
+	    Printf("USB power set to: %ld\n", state);
+	}
+
+   NOTE
+	As of V1.1 the call gives up after three seconds without an answer from
+	the firmware and returns -1. Prior to V1.1 it had no time limit and no
+	way to report a failure: a mailbox that did not answer stopped the task
+	for good.
+
+   SEE ALSO
+	mailbox.resource/MB_GetPowerState()
+
+mailbox.resource/MB_StringCommand           mailbox.resource/MB_StringCommand
+
+   NAME
+	MB_StringCommand -- send a vcgencmd-style text command
+
+   SYNOPSIS
+	length = MB_StringCommand( command, reply, reply_capacity )
+	d0                         a0       a1     d0
+
+	ULONG MB_StringCommand(STRPTR, STRPTR, ULONG);
+
+   FUNCTION
+	Sends a null-terminated ASCII command string using the
+	GET_GENCMD_RESULT property tag (0x00030080), the same tag
+	vcgencmd uses on Linux, and copies the firmware's text reply
+	into the caller's buffer.
+
+   INPUTS
+	command         A null-terminated ASCII command string, e.g.
+	                "measure_temp". May not exceed 1023 characters.
+	reply           A buffer to receive the reply text, or NULL to discard
+	                it.
+	reply_capacity  The size in bytes of the reply buffer. The reply is
+	                truncated to whichever is smaller: this value or 1024.
+
+   RESULTS
+	length          The reply length reported by the firmware, or -1 on a
+	                mailbox transport error or an oversized command
+	                string.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/dos.h>
+	#include <proto/mailbox.h>
+
+	APTR MailboxBase = OpenResource("mailbox.resource");
+	if (MailboxBase)
+	{
+	    UBYTE reply[256];
+
+	    MB_StringCommand("measure_temp", reply, sizeof(reply));
+	    Printf("vcgencmd reply: %s\n", reply);
+	}
+
+   NOTE
+	As of V1.1 the call gives up after three seconds without an answer from
+	the firmware and returns -1. Prior to V1.1 it had no time limit and no
+	way to report a failure: a mailbox that did not answer stopped the task
+	for good.
+
+   SEE ALSO
+	mailbox.resource/MB_RawCommand()
+
+

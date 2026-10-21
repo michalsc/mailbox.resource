@@ -69,6 +69,8 @@ APTR Init(REGARG(struct ExecBase *SysBase, "a6"))
         relFuncTable[7] = (ULONG)&L_SetPowerState;
         relFuncTable[8] = (ULONG)&L_GetGPIOState;
         relFuncTable[9] = (ULONG)&L_SetGPIOState;
+        relFuncTable[10] = (ULONG)&L_ObtainLock;
+        relFuncTable[11] = (ULONG)&L_ReleaseLock;
         relFuncTable[NUMBER_OF_FUNCTIONS] = (ULONG)-1;
 
         MailboxBase = (struct MailboxBase *)((UBYTE *)base_pointer + BASE_NEG_SIZE);

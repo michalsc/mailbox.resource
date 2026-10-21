@@ -16,4 +16,6 @@ ULONG MB_GetPowerState(ULONG id) (D0)
 ULONG MB_SetPowerState(ULONG id, ULONG state) (D0,D1)
 ULONG MB_GetGPIOState(ULONG gpio) (D0)
 ULONG MB_SetGPIOState(ULONG gpio, ULONG state) (D0,D1)
+VOID MB_ObtainLock() ()
+VOID MB_ReleaseLock() ()
 ==end
